@@ -2,6 +2,7 @@ module InjectorRegistrator
   class << self
 
     def register_injection(key, args={}, &block)
+      args = Mash.new(args)
       @inject_reg ||= Mash.new
       @inject_reg[key] ||= Mash.new
       if(args[:recipes])
