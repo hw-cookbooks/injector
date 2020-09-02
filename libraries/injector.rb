@@ -1,17 +1,16 @@
 module InjectorRegistrator
   class << self
-
-    def register_injection(key, args={}, &block)
+    def register_injection(key, args = {}, &block)
       args = Mash.new(args)
       @inject_reg ||= Mash.new
       @inject_reg[key] ||= Mash.new
-      if(args[:recipes])
+      if args[:recipes]
         @inject_reg[key][:recipes] = (Array(@inject_reg[key][:recipes]) + Array(args[:recipes])).uniq
       end
-      if(args[:paths])
+      if args[:paths]
         @inject_reg[key][:paths] = (Array(@inject_reg[key][:paths]) + Array(args[:paths])).uniq
       end
-      if(block_given?)
+      if block_given?
         @inject_reg[key][:blocks] ||= []
         @inject_reg[key][:blocks] << block
       end
@@ -19,7 +18,7 @@ module InjectorRegistrator
     end
 
     def injection_for(key, type)
-      if(@inject_reg && @inject_reg[key] && @inject_reg[key][type])
+      if @inject_reg && @inject_reg[key] && @inject_reg[key][type]
         @inject_reg[key][type]
       else
         []
@@ -29,17 +28,16 @@ module InjectorRegistrator
 end
 
 module InjectorHelper
-
   module GenericMethods
     def register_injection(*args, &block)
       InjectorRegistrator.register_injection(*args, &block)
     end
-    
+
     def default_injection_order
       %w(recipes paths blocks)
     end
-    
-    def trigger_injection!(key, override_injection_order=nil)
+
+    def trigger_injection!(key, override_injection_order = nil)
       Chef::Log.info "Starting custom injection for: #{key}"
       injection_order = override_injection_order || default_injection_order
       Array(injection_order).each do |type|
@@ -61,7 +59,7 @@ module InjectorHelper
       Chef::Log.info "Completed custom injection for: #{key}"
       true
     end
-    
+
     def inject_recipe(cookbook, recipe)
       ckbk = Chef::CookbookLoader.new(Chef::Config[:cookbook_path]).load_cookbooks[cookbook]
       raise "Failed to locate requested cookbook for recipe injection: #{cookbook}" unless ckbk
@@ -73,28 +71,28 @@ module InjectorHelper
     module RecipeMethods
       def inject_file(path, *args)
         Chef::Log.info("Injecting file: #{path}") unless args.include?(:no_log)
-        raise "Injection file not found! (#{path})" unless ::File.exists?(path)
+        raise "Injection file not found! (#{path})" unless ::File.exist?(path)
         from_file(path)
       end
 
       def inject_block(block)
         Chef::Log.info 'Injecting custom block'
-        instance_eval &block
+        instance_eval(&block)
       end
     end
 
     module ProviderMethods
       def inject_file(path, *args)
         Chef::Log.info("Injecting file: #{path}") unless args.include?(:no_log)
-        raise "Injection file not found! (#{path})" unless ::File.exists?(path)
+        raise "Injection file not found! (#{path})" unless ::File.exist?(path)
         recipe_eval do
-          self.instance_eval(IO.read(path), path, 1)
+          instance_eval(IO.read(path), path, 1)
         end
       end
 
       def inject_block(block)
         Chef::Log.info 'Injecting custom block'
-        recipe_eval &block
+        recipe_eval(&block)
       end
     end
   end
@@ -111,5 +109,5 @@ module InjectorHelper
   end
 end
 
-Chef::Recipe.send(:include, InjectorHelper)
-Chef::Provider.send(:include, InjectorHelper)
+Chef::Recipe.include InjectorHelper
+Chef::Provider.include InjectorHelper
