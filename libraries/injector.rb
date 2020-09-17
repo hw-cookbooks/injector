@@ -110,4 +110,3 @@ module InjectorHelper
 end
 
 Chef::DSL::Recipe.include InjectorHelper
-Chef::DSL::Recipe.include InjectorHelper
