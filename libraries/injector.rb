@@ -109,5 +109,4 @@ module InjectorHelper
   end
 end
 
-Chef::Recipe.include InjectorHelper
-Chef::Provider.include InjectorHelper
+Chef::DSL::Recipe.include InjectorHelper
